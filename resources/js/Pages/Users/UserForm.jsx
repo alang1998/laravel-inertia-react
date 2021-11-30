@@ -1,13 +1,9 @@
 import React from 'react'
 
-export default function UserForm({data, setData, button, errors}) {
-    
-    const changeHandler = (e) => {
-        setData({...data, [e.target.id]: e.target.value})
-    }
+export default function UserForm({data, setData, submitLabel, submit, errors, changeHandler}) {
 
     return (
-        <div>
+        <form onSubmit={submit}>
             <div className="row">
                 <div className="col-md-6">
                     <div className="mb-3">
@@ -43,7 +39,7 @@ export default function UserForm({data, setData, button, errors}) {
                 <input type="text" name="location" value={data.location} onChange={changeHandler} id="location" className="form-control" />
                 {errors && <span className="text-danger mt-1">{errors.location}</span>}
             </div>
-            <button className="btn btn-primary">{button}</button>
-        </div>
+            <button className="btn btn-primary">{submitLabel}</button>
+        </form>
     )
 }

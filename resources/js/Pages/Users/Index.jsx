@@ -1,31 +1,103 @@
-import React, { useState } from 'react'
+import React from 'react'
 import App from  '../../Layouts/App'
 import Pagination from '../../Components/Pagination'
 import Dialog from '../../Components/Dialog'
 import useDialog from '../../Hooks/useDialog'
-import Create from './Create'
-import Edit from './Edit'
+import { Inertia } from '@inertiajs/inertia'
+import { useForm } from '@inertiajs/inertia-react'
+import UserForm from './UserForm'
 
 export default function Index(props) {
 
     const { data: users, links, from } = props.users
+
     const { modal: addDialogTrigger, open: addDialogHandler, close: addDialogClose } = useDialog()
     const { modal: editDialogTrigger, open: editDialogHandler, close: editDialogClose } = useDialog()
-    const [state, setState] = useState([])
+    const { modal: destroyDialogTrigger, open: destroyDialogHandler, close: destroyDialogClose } = useDialog()
+
+    const { data, setData, post, put, reset, errors } = useForm({
+        name: '',
+        email: '',
+        username: '',
+        location: '',
+        password: '',
+    })
+    
+    const changeHandler = (e) => {
+        setData({...data, [e.target.id]: e.target.value})
+    }
 
     const editHandler = (user) => {
-        setState(user);
+        setData(user)
         editDialogHandler()
+    }
+
+    const deleteHandler = (user) => {
+        setData(user)
+        destroyDialogHandler()
+    }
+
+    const destroyHandler = () => {
+        Inertia.delete(route('users.destroy', data.id), {
+            onSuccess: () => { destroyDialogClose() }
+        })
+    }
+
+    const storeHandler = (e) => {
+        e.preventDefault();
+        post(route('users.store'), { 
+            data, 
+            onSuccess: () => {
+                reset(), addDialogClose()
+            }
+        })
+    }
+
+    const updateHandler = (e) => {
+        e.preventDefault();
+        put(route('users.update', data.id), { 
+            data, 
+            onSuccess: () => {
+                reset(), editDialogClose()
+            }
+        })
     }
 
     return (
         <>
             <Dialog trigger={addDialogTrigger} title="Create New User">
-                <Create close={addDialogClose}/>
+                <UserForm 
+                {...{
+                    data, 
+                    setData, 
+                    submitLabel: 'Save', 
+                    submit: storeHandler, 
+                    errors, 
+                    changeHandler: changeHandler
+                    }
+                }
+                />
             </Dialog>
 
-            <Dialog trigger={editDialogTrigger} title="Edit User">
-                <Edit model={state} close={editDialogClose}/>
+            <Dialog trigger={editDialogTrigger} title={`Edit User ${data.name}`}>
+                <UserForm 
+                {...{
+                    data, 
+                    setData, 
+                    submitLabel: 'Update', 
+                    submit: updateHandler, 
+                    errors, 
+                    changeHandler: changeHandler
+                    }
+                }/>
+            </Dialog>
+
+            <Dialog trigger={destroyDialogTrigger} title={`Delete User ${data.name}`}>
+                <p>Are you sure?</p>
+                <div className="d-flex flex-row-reverse">
+                    <button className="btn btn-danger mx-2" onClick={destroyHandler}>Delete</button>
+                    <button className="btn btn-secondary">Cancel</button>
+                </div>
             </Dialog>
             
             <button onClick={addDialogHandler} className="btn btn-primary mb-1"> Add</button>
@@ -62,9 +134,8 @@ export default function Index(props) {
                                                 </svg>
                                             </button>
                                             <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                                <li><a className="dropdown-item" href="#">View</a></li>
-                                                <button onClick={() => editHandler(user)} className="dropdown-item" href="#">Edit</button>
-                                                <li><a className="dropdown-item" href="#">Delete</a></li>
+                                                <li><button onClick={() => editHandler(user)} className="dropdown-item" href="#">Edit</button></li>
+                                                <li><button onClick={() => deleteHandler(user)} className="dropdown-item" href="#">Delete</button></li>
                                             </ul>
                                         </div>
                                     </td>
